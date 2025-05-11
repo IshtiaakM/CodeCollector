@@ -1,0 +1,110 @@
+// File: m2.py
+import os
+import sys
+
+def get_user_input():
+    # Hardcoded project directory path
+    project_dir = "/Users/nihal/Downloads/IRD/data-comparison-tool"  # <-- Replace this with your actual project path
+
+    # Prompt for file extensions
+    extensions_input = input("Enter file extensions to include (comma-separated, e.g., py,js,CSS), or press Enter to include all: ").strip()
+
+    # Output filename
+    output_filename = "project_code.txt"
+    print(f"Output will be saved to: {output_filename}")
+
+    return project_dir, extensions_input, output_filename
+
+def parse_extensions(extensions_input):
+    if not extensions_input:
+        return None  # Indicates all files
+    # Split and clean extensions
+    extensions = [ext.strip().lower() for ext in extensions_input.split(',') if ext.strip()]
+    return extensions
+
+def is_binary_file(filepath):
+    # Simple heuristic to detect binary files
+    try:
+        with open(filepath, 'rb') as file:
+            chunk = file.read(1024)
+            if b'\0' in chunk:
+                return True
+        return False
+    except Exception:
+        return True  # If can't read, assume binary or unreadable
+
+def collect_files(project_dir, extensions):
+    collected_files = []
+
+    for root, dirs, files in os.walk(project_dir):
+        # Optional: Exclude common directories like .git, node_modules, etc.
+        dirs[:] = [d for d in dirs if d not in ['.git', 'node_modules', '__pycache__']]
+
+        for file in files:
+            file_path = os.path.join(root, file)
+            # Check extension if specified
+            if extensions:
+                if not any(file.lower().endswith('.' + ext) for ext in extensions):
+                    continue
+            # Check if file is binary
+            if is_binary_file(file_path):
+                print(f"Skipping binary or unreadable file: {file_path}")
+                continue
+            collected_files.append(file_path)
+    return collected_files
+
+def read_file_content(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except UnicodeDecodeError:
+        # Try with different encoding or skip
+        try:
+            with open(file_path, 'r', encoding='latin1') as f:
+                return f.read()
+        except Exception as e:
+            print(f"Could not read file {file_path}: {e}")
+            return None
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+        return None
+
+def main():
+    project_dir, extensions_input, output_filename = get_user_input()
+
+    # Validate project directory
+    if not os.path.isdir(project_dir):
+        print(f"Error: The directory '{project_dir}' does not exist or is not accessible.")
+        sys.exit(1)
+
+    extensions = parse_extensions(extensions_input)
+
+    print("Collecting files...")
+    files = collect_files(project_dir, extensions)
+
+    if not files:
+        print("No files found matching the criteria.")
+        return
+
+    print(f"Found {len(files)} files. Processing...")
+
+    with open(output_filename, 'w', encoding='utf-8') as outfile:
+        for file_path in files:
+            filename = os.path.basename(file_path)
+            print(f"Processing: {file_path}")
+            content = read_file_content(file_path)
+            if content is None:
+                print(f"Skipping file due to read error: {file_path}")
+                continue
+            outfile.write(f"file name: {filename}\n")
+            outfile.write(f"file path: {file_path}\n")
+            outfile.write("code:\n")
+            outfile.write(content)
+            outfile.write("\n---------\n\n")
+
+    print(f"Done! Output saved to {output_filename}")
+
+if __name__ == "__main__":
+    main()
+
+

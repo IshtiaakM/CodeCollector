@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Collector</title>
+    <link rel="icon" type="image/svg+xml" href="/static/ic.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Header -->
+    <header class="bg-blue-600 shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <img src="/static/ic.svg" alt="CodeCollector Icon" class="h-6 w-6">
+                    <div class="text-2xl font-bold text-white">CodeCollector</div>
+                </div>
+                <nav class="flex items-center space-x-8">
+                    <a href="#" class="text-white hover:text-blue-200 font-medium">Home</a>
+                    <div class="relative">
+                        <button id="uploads-toggle" class="text-white hover:text-blue-200 font-medium flex items-center">
+                            Previous Uploads
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div id="uploads-dropdown" class="hidden absolute mt-2 w-64 bg-white rounded-lg shadow-lg max-h-64 overflow-y-auto z-10">
+                            <div id="uploads-list" class="py-2">
+                                <!-- File list will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <button id="clear-files" class="text-white hover:text-blue-200 font-medium">Clear Files</button>
+                </nav>
+                <button id="theme-toggle" class="text-white hover:text-blue-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Form -->
+    <section id="form" class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold mb-6 text-center">Upload Your Project</h2>
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2" for="files">Upload Files or ZIP</label>
+                        <input type="file" id="files" name="files" multiple class="w-full p-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2" for="extensions">File Extensions (optional, e.g., go,vue,java)</label>
+                        <input type="text" id="extensions" name="extensions" placeholder="go,vue,java" class="w-full p-2 border rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2" for="output">Output Filename (optional)</label>
+                        <input type="text" id="output" name="output" placeholder="project_code.txt" class="w-full p-2 border rounded">
+                    </div>
+                    <div class="flex space-x-4">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Generate</button>
+                        <button type="reset" id="reset-button" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-400">Reset</button>
+                    </div>
+                </form>
+                <div id="progress" class="mt-4 hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p class="text-gray-600 mt-2">Processing...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="py-16 bg-gray-50 hidden">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-2xl font-bold mb-4">Your Code Archive is Ready!</h2>
+            <p id="summary" class="text-gray-600 mb-6"></p>
+            <div class="space-x-4">
+                <a id="download-status" href="#" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Download Status</a>
+                <a id="download-code" href="#" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Download Code</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification Popup -->
+    <div id="notification" class="hidden fixed top-16 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-opacity duration-300 opacity-0 text-lg">
+        Process Completed
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold mb-2">CodeCollector</h3>
+                    <p class="text-sm text-gray-400">Simplify your code collection process</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Home</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-gray-800 text-center">
+                <p class="text-sm text-gray-400">© 2025 CodeCollector. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            document.body.classList.toggle('bg-gray-100');
+            document.body.classList.toggle('bg-gray-900');
+        });
+
+        // Form Submission
+        const form = document.getElementById('upload-form');
+        const progress = document.getElementById('progress');
+        const results = document.getElementById('results');
+        const summary = document.getElementById('summary');
+        const downloadStatus = document.getElementById('download-status');
+        const downloadCode = document.getElementById('download-code');
+        const notification = document.getElementById('notification');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            progress.classList.remove('hidden');
+            results.classList.add('hidden');
+            notification.classList.add('hidden');
+
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    progress.classList.add('hidden');
+                    results.classList.remove('hidden');
+                    summary.textContent = `Files processed: ${data.file_count} | Total size: ${data.total_size} KB`;
+                    downloadStatus.href = data.status_url;
+                    if (data.code_url) {
+                        downloadCode.href = data.code_url;
+                        downloadCode.classList.remove('hidden');
+                    } else {
+                        downloadCode.classList.add('hidden');
+                    }
+                    // Show notification
+                    notification.classList.remove('hidden', 'opacity-0');
+                    notification.classList.add('opacity-100');
+                    setTimeout(() => {
+                        notification.classList.remove('opacity-100');
+                        notification.classList.add('opacity-0');
+                        setTimeout(() => notification.classList.add('hidden'), 300);
+                    }, 3000);
+                    // Refresh file list
+                    loadFiles();
+                } else {
+                    alert('Error: ' + data.message);
+                    progress.classList.add('hidden');
+                }
+            } catch (error) {
+                alert('Error uploading files');
+                progress.classList.add('hidden');
+            }
+        });
+
+        // Reset Button
+        const resetButton = document.getElementById('reset-button');
+        resetButton.addEventListener('click', () => {
+            form.reset();
+            results.classList.add('hidden');
+            progress.classList.add('hidden');
+            summary.textContent = '';
+            downloadStatus.href = '#';
+            downloadCode.href = '#';
+            downloadCode.classList.add('hidden');
+        });
+
+        // Previous Uploads Dropdown
+        const uploadsToggle = document.getElementById('uploads-toggle');
+        const uploadsDropdown = document.getElementById('uploads-dropdown');
+        const uploadsList = document.getElementById('uploads-list');
+
+        uploadsToggle.addEventListener('click', () => {
+            uploadsDropdown.classList.toggle('hidden');
+        });
+
+        // Load files into dropdown
+        async function loadFiles() {
+            try {
+                const response = await fetch('/files');
+                const files = await response.json();
+                uploadsList.innerHTML = files.length > 0
+                    ? files.map(file => `
+                        <a href="${file.url}" class="block px-4 py-2 text-gray-700 hover:bg-blue-100 truncate">${file.name}</a>
+                    `).join('')
+                    : '<p class="px-4 py-2 text-gray-500">No files available</p>';
+            } catch (error) {
+                uploadsList.innerHTML = '<p class="px-4 py-2 text-gray-500">Error loading files</p>';
+            }
+        }
+
+        // Initial load of files
+        loadFiles();
+
+        // Clear Files
+        const clearFilesButton = document.getElementById('clear-files');
+        clearFilesButton.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete all text files? This cannot be undone.')) {
+                try {
+                    const response = await fetch('/clear-files', {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('All text files cleared successfully');
+                        loadFiles(); // Refresh file list
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Error clearing files');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

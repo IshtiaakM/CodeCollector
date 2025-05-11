@@ -1,0 +1,123 @@
+// File: m.py
+import os
+import sys
+from pathlib import Path
+import uuid
+
+# Hardcoded project directory path
+PROJECT_PATH = "/Users/nihal/Downloads/IRD/data-comparison-tool"  # Modify this to your project path
+OUTPUT_FILE = "project_code.txt"
+
+def validate_project_path(project_path: str) -> Path:
+    """Validate the project directory path."""
+    path = Path(project_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Project directory '{project_path}' does not exist.")
+    if not path.is_dir():
+        raise NotADirectoryError(f"Path '{project_path}' is not a directory.")
+    return path
+
+def parse_extensions(user_input: str) -> set:
+    """Parse user input for file extensions, returning a set of valid extensions."""
+    if not user_input.strip():
+        return set()  # Empty set means include all files
+    extensions = {ext.strip().lower() for ext in user_input.split(",") if ext.strip()}
+    return extensions
+
+def is_text_file(file_path: Path) -> bool:
+    """Check if a file is likely a text file by attempting to read it."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            f.read(1024)  # Read first 1KB to test
+        return True
+    except (UnicodeDecodeError, IOError):
+        return False
+
+def process_file(file_path: Path, output_file: Path):
+    """Process a single file and append its content to the output file."""
+    try:
+        if not is_text_file(file_path):
+            print(f"Skipped '{file_path}': Not a text file or unreadable.")
+            return False
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+
+        with open(output_file, "a", encoding="utf-8") as out:
+            out.write(f"file name: {file_path.name}\n")
+            out.write(f"file path: {file_path}\n")
+            out.write("code:\n")
+            out.write(content if content else "<empty>")
+            out.write("\n---------\n")
+        return True
+    except PermissionError:
+        print(f"Skipped '{file_path}': Permission denied.")
+        return False
+    except Exception as e:
+        print(f"Skipped '{file_path}': Error reading file ({str(e)}).")
+        return False
+
+def consolidate_project(project_path: Path, extensions: set) -> tuple[int, int]:
+    """Consolidate project files into a single text file."""
+    output_path = project_path / OUTPUT_FILE
+    total_files = 0
+    included_files = 0
+
+    # Clear the output file if it exists
+    if output_path.exists():
+        output_path.unlink()
+
+    # Walk through the project directory
+    for root, _, files in os.walk(project_path):
+        for file_name in files:
+            file_path = Path(root) / file_name
+            total_files += 1
+
+            # Skip the output file itself
+            if file_path == output_path:
+                continue
+
+            # Skip hidden or system files (optional, can be customized)
+            if file_name.startswith("."):
+                print(f"Skipped '{file_path}': Hidden file.")
+                continue
+
+            # Check file extension if extensions are specified
+            if extensions and file_path.suffix[1:].lower() not in extensions:
+                continue
+
+            # Process the file
+            print(f"Processing file {total_files}: {file_path}")
+            if process_file(file_path, output_path):
+                included_files += 1
+
+    return total_files, included_files
+
+def main():
+    """Main function to run the consolidation script."""
+    try:
+        # Validate project path
+        project_path = validate_project_path(PROJECT_PATH)
+
+        # Get user input for extensions
+        user_input = input("Enter file extensions (e.g., py,js,css) or press Enter for all files: ")
+        extensions = parse_extensions(user_input)
+
+        # Consolidate files
+        total_files, included_files = consolidate_project(project_path, extensions)
+
+        # Log results
+        print(f"\nProcessed {total_files} files.")
+        print(f"Included {included_files} files in '{project_path / OUTPUT_FILE}'.")
+        if included_files == 0:
+            print("Warning: No files were included. Check the directory or extensions.")
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+
