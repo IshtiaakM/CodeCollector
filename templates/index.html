@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Collector</title>
+    <title>Project Code Collector</title>
     <link rel="icon" type="image/svg+xml" href="/static/ic.svg">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -16,7 +16,7 @@
                     <img src="/static/ic.svg" alt="CodeCollector Icon" class="h-6 w-6">
                     <div class="text-2xl font-bold text-white">CodeCollector</div>
                 </div>
-                <nav class="flex items-center space-x-8">
+                <div class="md:flex md:items-center md:space-x-8 hidden md:flex-row">
                     <a href="#" class="text-white hover:text-blue-200 font-medium">Home</a>
                     <div class="relative">
                         <button id="uploads-toggle" class="text-white hover:text-blue-200 font-medium flex items-center">
@@ -32,11 +32,44 @@
                         </div>
                     </div>
                     <button id="clear-files" class="text-white hover:text-blue-200 font-medium">Clear Files</button>
-                </nav>
-                <button id="theme-toggle" class="text-white hover:text-blue-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-toggle" class="text-white focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="md:flex hidden">
+                    <button id="theme-toggle" class="text-white hover:text-blue-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden flex-col space-y-4 mt-4 bg-blue-600 p-4 rounded-lg shadow-lg absolute top-16 left-0 w-full z-20">
+                <a href="#" class="text-white hover:text-blue-200 font-medium">Home</a>
+                <div class="relative">
+                    <button id="mobile-uploads-toggle" class="text-white hover:text-blue-200 font-medium flex items-center w-full justify-between">
+                        Previous Uploads
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="mobile-uploads-dropdown" class="hidden absolute mt-2 w-full bg-white rounded-lg shadow-lg max-h-64 overflow-y-auto z-10">
+                        <div id="mobile-uploads-list" class="py-2">
+                            <!-- File list will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <button id="mobile-clear-files" class="text-white hover:text-blue-200 font-medium w-full text-left">Clear Files</button>
+                <button id="mobile-theme-toggle" class="text-white hover:text-blue-200 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
+                    Theme
                 </button>
             </div>
         </div>
@@ -81,8 +114,8 @@
             <h2 class="text-2xl font-bold mb-4">Your Code Archive is Ready!</h2>
             <p id="summary" class="text-gray-600 mb-6"></p>
             <div class="space-x-4">
-                <a id="download-status" href="#" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">See Status</a>
-                <a id="download-code" href="#" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Download Code text</a>
+                <a id="download-status" href="#" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Download Status</a>
+                <a id="download-code" href="#" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Download Code</a>
             </div>
         </div>
     </section>
@@ -114,7 +147,13 @@
     <script>
         // Theme Toggle
         const themeToggle = document.getElementById('theme-toggle');
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
         themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            document.body.classList.toggle('bg-gray-100');
+            document.body.classList.toggle('bg-gray-900');
+        });
+        mobileThemeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark');
             document.body.classList.toggle('bg-gray-100');
             document.body.classList.toggle('bg-gray-900');
@@ -187,11 +226,17 @@
 
         // Previous Uploads Dropdown
         const uploadsToggle = document.getElementById('uploads-toggle');
+        const mobileUploadsToggle = document.getElementById('mobile-uploads-toggle');
         const uploadsDropdown = document.getElementById('uploads-dropdown');
+        const mobileUploadsDropdown = document.getElementById('mobile-uploads-dropdown');
         const uploadsList = document.getElementById('uploads-list');
+        const mobileUploadsList = document.getElementById('mobile-uploads-list');
 
         uploadsToggle.addEventListener('click', () => {
             uploadsDropdown.classList.toggle('hidden');
+        });
+        mobileUploadsToggle.addEventListener('click', () => {
+            mobileUploadsDropdown.classList.toggle('hidden');
         });
 
         // Load files into dropdown
@@ -199,13 +244,16 @@
             try {
                 const response = await fetch('/files');
                 const files = await response.json();
-                uploadsList.innerHTML = files.length > 0
+                const listItems = files.length > 0
                     ? files.map(file => `
                         <a href="${file.url}" class="block px-4 py-2 text-gray-700 hover:bg-blue-100 truncate">${file.name}</a>
                     `).join('')
                     : '<p class="px-4 py-2 text-gray-500">No files available</p>';
+                uploadsList.innerHTML = listItems;
+                mobileUploadsList.innerHTML = listItems;
             } catch (error) {
                 uploadsList.innerHTML = '<p class="px-4 py-2 text-gray-500">Error loading files</p>';
+                mobileUploadsList.innerHTML = '<p class="px-4 py-2 text-gray-500">Error loading files</p>';
             }
         }
 
@@ -214,6 +262,7 @@
 
         // Clear Files
         const clearFilesButton = document.getElementById('clear-files');
+        const mobileClearFilesButton = document.getElementById('mobile-clear-files');
         clearFilesButton.addEventListener('click', async () => {
             if (confirm('Are you sure you want to delete all text files? This cannot be undone.')) {
                 try {
@@ -231,6 +280,31 @@
                     alert('Error clearing files');
                 }
             }
+        });
+        mobileClearFilesButton.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete all text files? This cannot be undone.')) {
+                try {
+                    const response = await fetch('/clear-files', {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('All text files cleared successfully');
+                        loadFiles(); // Refresh file list
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Error clearing files');
+                }
+            }
+        });
+
+        // Mobile Menu Toggle
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
         });
     </script>
 </body>
